@@ -1,7 +1,7 @@
 from scanner import FileScanner
 from parser import PythonParser
 from models import Project
-
+from analyzer import ProjectAnalyzer
 
 def display_project(project: Project):
 
@@ -116,6 +116,23 @@ def display_project(project: Project):
         else:
             print("  None")
 
+def display_dependency_graph(graph):
+
+    print("\n" + "=" * 60)
+    print("DEPENDENCY GRAPH")
+    print("=" * 60)
+
+    for file, dependencies in graph.items():
+
+        print(f"\n{file}")
+
+        if dependencies:
+
+            for dependency in dependencies:
+                print(f"  └── {dependency}")
+
+        else:
+            print("  └── No internal dependencies")
 
 def main():
 
@@ -130,6 +147,14 @@ def main():
         project.files.append(parser.parse(file))
 
     display_project(project)
+
+    analyzer = ProjectAnalyzer(project)
+
+    analyzer.summary()
+
+    dependency_graph = analyzer.dependency_graph()
+
+    display_dependency_graph(dependency_graph)
 
 
 if __name__ == "__main__":
