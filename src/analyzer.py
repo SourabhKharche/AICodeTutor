@@ -1,10 +1,58 @@
 from models import Project
 import ast
-
+from symbol_table import SymbolTable
+from call_graph import CallGraph
 class ProjectAnalyzer:
 
     def __init__(self, project: Project):
+
         self.project = project
+
+        self.symbol_table = SymbolTable()
+
+        self.symbol_table.build(project)
+        
+        self.call_graph = CallGraph()
+
+        self.call_graph.build(project)
+
+    def find_symbol(self, name):
+        """
+        Finds a symbol by exact name or partial name.
+        """
+
+        # First try exact match
+
+        result = self.symbol_table.find(name)
+
+        if result:
+            return result
+
+
+        # Search for matching symbols
+
+        matches = []
+
+
+        for symbol, information in self.symbol_table.symbols.items():
+
+            symbol_name = information["name"]
+
+
+            if symbol_name == name:
+
+                matches.append(
+                    {
+                        "symbol": symbol,
+                        "information": information
+                    }
+                )
+
+
+        return matches
+    
+    def display_symbol_table(self):
+        self.symbol_table.display()
 
     def total_files(self):
         return len(self.project.files)
@@ -115,3 +163,9 @@ class ProjectAnalyzer:
 
         if largest:
             print(f"Largest File : {largest.name}")
+
+    def display_call_graph(self):
+        self.call_graph.display()
+    
+    def get_calls(self, function_name):
+        return self.call_graph.get_calls(function_name)

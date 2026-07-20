@@ -50,6 +50,8 @@ class PythonFile:
 
     has_entry_point: bool = False
 
+    tree: object = None
+
 
 @dataclass
 class Project:

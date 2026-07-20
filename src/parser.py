@@ -13,9 +13,11 @@ class PythonParser:
         tree = ast.parse(source)
 
         python_file = PythonFile(
-            name=path.name,
-            path=str(path)
+            name = filepath.name,
+            path = filepath
         )
+
+        python_file.tree = tree
 
         for node in tree.body:
             # -------------------------
@@ -36,7 +38,7 @@ class PythonParser:
                     and test.comparators[0].value == "__main__"
                 ):
                     python_file.has_entry_point = True
-                    
+
             # -------------------------
             # import math
             # -------------------------

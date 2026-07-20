@@ -144,6 +144,50 @@ def display_learning_order(order):
 
         print(f"{index}. {file}")
 
+def display_symbol_search(result):
+
+    print("\n" + "=" * 60)
+    print("SYMBOL SEARCH RESULT")
+    print("=" * 60)
+
+
+    if result is None:
+
+        print("Symbol not found.")
+        return
+
+
+    if isinstance(result, list):
+
+        for item in result:
+
+            print("\nSymbol:")
+            print(item["symbol"])
+
+            print(
+                "Type:",
+                item["information"]["type"]
+            )
+
+            print(
+                "File:",
+                item["information"]["file"]
+            )
+
+        return
+
+
+    print("Name:", result["name"])
+    print("Type:", result["type"])
+    print("File:", result["file"])
+
+    if result["parent"]:
+
+        print(
+            "Class:",
+            result["parent"]
+        )
+
 def main():
 
     scanner = FileScanner("sample_projects")
@@ -178,6 +222,15 @@ def main():
     learning_order = analyzer.learning_order()
 
     display_learning_order(learning_order)
+
+    analyzer.display_symbol_table()
+    analyzer.display_call_graph()
+
+    search_result = analyzer.find_symbol(
+    "PhysicsEngine"
+    )
+
+    display_symbol_search(search_result)
 
 if __name__ == "__main__":
     main()
