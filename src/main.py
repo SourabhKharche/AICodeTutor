@@ -134,6 +134,16 @@ def display_dependency_graph(graph):
         else:
             print("  └── No internal dependencies")
 
+def display_learning_order(order):
+
+    print("\n" + "=" * 60)
+    print("LEARNING ORDER")
+    print("=" * 60)
+
+    for index, file in enumerate(order, start=1):
+
+        print(f"{index}. {file}")
+
 def main():
 
     scanner = FileScanner("sample_projects")
@@ -151,11 +161,23 @@ def main():
     analyzer = ProjectAnalyzer(project)
 
     analyzer.summary()
+    entry_point = analyzer.find_entry_point()
 
+    print("\n" + "=" * 60)
+    print("ENTRY POINT")
+    print("=" * 60)
+
+    if entry_point:
+        print(entry_point)
+    else:
+        print("No entry point detected.")
     dependency_graph = analyzer.dependency_graph()
 
     display_dependency_graph(dependency_graph)
 
+    learning_order = analyzer.learning_order()
+
+    display_learning_order(learning_order)
 
 if __name__ == "__main__":
     main()

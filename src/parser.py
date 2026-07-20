@@ -18,7 +18,25 @@ class PythonParser:
         )
 
         for node in tree.body:
+            # -------------------------
+            # Entry Point
+            # -------------------------
+            if isinstance(node, ast.If):
 
+                test = node.test
+
+                if (
+                    isinstance(test, ast.Compare)
+                    and isinstance(test.left, ast.Name)
+                    and test.left.id == "__name__"
+                    and len(test.ops) == 1
+                    and isinstance(test.ops[0], ast.Eq)
+                    and len(test.comparators) == 1
+                    and isinstance(test.comparators[0], ast.Constant)
+                    and test.comparators[0].value == "__main__"
+                ):
+                    python_file.has_entry_point = True
+                    
             # -------------------------
             # import math
             # -------------------------

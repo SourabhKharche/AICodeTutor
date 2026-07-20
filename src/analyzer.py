@@ -1,5 +1,5 @@
 from models import Project
-
+import ast
 
 class ProjectAnalyzer:
 
@@ -28,6 +28,37 @@ class ProjectAnalyzer:
     def total_constants(self):
         return sum(len(file.constants) for file in self.project.files)
 
+    def learning_order(self):
+
+        files = self.project.files
+
+        def complexity(file):
+
+            class_count = len(file.classes)
+
+            function_count = len(file.functions)
+
+            method_count = sum(
+                len(class_info.methods)
+                for class_info in file.classes
+            )
+
+            return (
+                class_count
+                + function_count
+                + method_count
+            )
+
+        ordered_files = sorted(
+        files,
+        key=complexity
+        )
+
+        return [
+        file.name
+        for file in ordered_files
+        ]
+    
     def largest_file(self):
         if not self.project.files:
             return None
@@ -59,6 +90,15 @@ class ProjectAnalyzer:
 
         return graph
     
+    def find_entry_point(self):
+
+        for python_file in self.project.files:
+
+            if python_file.has_entry_point:
+                return python_file.name
+
+        return None
+
     def summary(self):
 
         print("\nPROJECT SUMMARY")

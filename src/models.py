@@ -36,12 +36,8 @@ class ClassInfo:
 
 @dataclass
 class PythonFile:
-    """
-    Represents one parsed Python file.
-    """
 
     name: str
-
     path: str
 
     imports: list[str] = field(default_factory=list)
@@ -51,6 +47,8 @@ class PythonFile:
     classes: list[ClassInfo] = field(default_factory=list)
 
     functions: list[FunctionInfo] = field(default_factory=list)
+
+    has_entry_point: bool = False
 
 
 @dataclass
