@@ -195,7 +195,7 @@ components/
 
 ---
 
-# 🛠️ Technologies Used
+# Technologies Used
 
 ## Programming Language
 
