@@ -1,171 +1,172 @@
-from models import Project
-import ast
+"""
+analyzer.py
+
+Coordinates the analysis of a parsed Python project.
+
+Responsibilities:
+- Build the symbol table
+- Build the call graph
+- Calculate project statistics
+- Find the entry point
+- Generate a beginner-friendly learning order
+
+Author: Sourabh Kharche
+Project: AI Code Tutor
+"""
+
 from symbol_table import SymbolTable
 from call_graph import CallGraph
+
+
+# ==========================================================
+# Project Analyzer
+# ==========================================================
+
 class ProjectAnalyzer:
+    """
+    Performs high-level analysis on a parsed project.
+    """
 
-    def __init__(self, project: Project):
-
-        self.project = project
+    def __init__(self):
+        """
+        Create the analyzer and its helper objects.
+        """
 
         self.symbol_table = SymbolTable()
-
-        self.symbol_table.build(project)
-        
         self.call_graph = CallGraph()
 
+    # ======================================================
+    # Analyze Project
+    # ======================================================
+
+    def analyze(self, project):
+        """
+        Analyze the entire project.
+
+        Parameters:
+            project (Project)
+
+        Returns:
+            dict
+        """
+
+        # Build lookup tables.
+        self.symbol_table.build(project)
         self.call_graph.build(project)
 
-    def find_symbol(self, name):
+        # Collect all analysis results.
+        results = {
+            "statistics": self.calculate_statistics(project),
+            "entry_point": self.find_entry_point(project),
+            "learning_order": self.build_learning_order(project),
+            "symbol_table": self.symbol_table,
+            "call_graph": self.call_graph
+        }
+
+        return results
+
+    # ======================================================
+    # Project Statistics
+    # ======================================================
+
+    def calculate_statistics(self, project):
         """
-        Finds a symbol by exact name or partial name.
+        Count important project information.
         """
 
-        # First try exact match
+        statistics = {
+            "python_files": 0,
+            "imports": 0,
+            "constants": 0,
+            "classes": 0,
+            "methods": 0,
+            "functions": 0,
+            "largest_file": None
+        }
 
-        result = self.symbol_table.find(name)
+        largest_file = None
+        largest_size = -1
 
-        if result:
-            return result
+        for python_file in project.files:
 
+            statistics["python_files"] += 1
 
-        # Search for matching symbols
+            statistics["imports"] += len(python_file.imports)
 
-        matches = []
+            statistics["constants"] += len(python_file.constants)
 
+            statistics["classes"] += len(python_file.classes)
 
-        for symbol, information in self.symbol_table.symbols.items():
+            statistics["functions"] += len(python_file.functions)
 
-            symbol_name = information["name"]
+            method_count = 0
 
+            for class_info in python_file.classes:
+                method_count += len(class_info.methods)
 
-            if symbol_name == name:
+            statistics["methods"] += method_count
 
-                matches.append(
-                    {
-                        "symbol": symbol,
-                        "information": information
-                    }
-                )
-
-
-        return matches
-    
-    def display_symbol_table(self):
-        self.symbol_table.display()
-
-    def total_files(self):
-        return len(self.project.files)
-
-    def total_classes(self):
-        return sum(len(file.classes) for file in self.project.files)
-
-    def total_functions(self):
-        return sum(len(file.functions) for file in self.project.files)
-
-    def total_methods(self):
-        return sum(
-            len(class_info.methods)
-            for file in self.project.files
-            for class_info in file.classes
-        )
-
-    def total_imports(self):
-        return sum(len(file.imports) for file in self.project.files)
-
-    def total_constants(self):
-        return sum(len(file.constants) for file in self.project.files)
-
-    def learning_order(self):
-
-        files = self.project.files
-
-        def complexity(file):
-
-            class_count = len(file.classes)
-
-            function_count = len(file.functions)
-
-            method_count = sum(
-                len(class_info.methods)
-                for class_info in file.classes
-            )
-
-            return (
-                class_count
-                + function_count
+            file_size = (
+                len(python_file.classes)
+                + len(python_file.functions)
                 + method_count
             )
 
-        ordered_files = sorted(
-        files,
-        key=complexity
-        )
+            if file_size > largest_size:
+                largest_size = file_size
+                largest_file = python_file.name
 
-        return [
-        file.name
-        for file in ordered_files
-        ]
-    
-    def largest_file(self):
-        if not self.project.files:
-            return None
+        statistics["largest_file"] = largest_file
 
-        return max(
-            self.project.files,
-            key=lambda file: len(file.classes) + len(file.functions)
-        )
+        return statistics
 
-    def dependency_graph(self):
-        project_modules = {
-            file.name.replace(".py", "")
-            for file in self.project.files
-        }
+    # ======================================================
+    # Entry Point
+    # ======================================================
 
-        graph = {}
+    def find_entry_point(self, project):
+        """
+        Find the file containing:
 
-        for file in self.project.files:
-            dependencies = []
+            if __name__ == "__main__":
+        """
 
-        for imported in file.imports:
-
-            module_name = imported.split(".")[0]
-
-            if module_name in project_modules:
-                dependencies.append(f"{module_name}.py")
-
-        graph[file.name] = dependencies
-
-        return graph
-    
-    def find_entry_point(self):
-
-        for python_file in self.project.files:
+        for python_file in project.files:
 
             if python_file.has_entry_point:
                 return python_file.name
 
         return None
 
-    def summary(self):
+    # ======================================================
+    # Learning Order
+    # ======================================================
 
-        print("\nPROJECT SUMMARY")
-        print("-" * 40)
+    def build_learning_order(self, project):
+        """
+        Suggest a simple order for reading the project.
 
-        print(f"Python Files : {self.total_files()}")
-        print(f"Imports      : {self.total_imports()}")
-        print(f"Constants    : {self.total_constants()}")
-        print(f"Classes      : {self.total_classes()}")
-        print(f"Methods      : {self.total_methods()}")
-        print(f"Functions    : {self.total_functions()}")
+        Files with fewer classes and functions appear first.
+        """
 
-        largest = self.largest_file()
+        learning_order = []
 
-        if largest:
-            print(f"Largest File : {largest.name}")
+        for python_file in project.files:
 
-    def display_call_graph(self):
-        self.call_graph.display()
-    
-    def get_calls(self, function_name):
-        return self.call_graph.get_calls(function_name)
+            complexity = (
+                len(python_file.classes)
+                + len(python_file.functions)
+            )
+
+            learning_order.append(
+                (complexity, python_file.name)
+            )
+
+        learning_order.sort()
+
+        ordered_files = []
+
+        for _, file_name in learning_order:
+            ordered_files.append(file_name)
+
+        return ordered_files

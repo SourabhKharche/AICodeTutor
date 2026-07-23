@@ -1,0 +1,21 @@
+# ==========================================================
+# AI Code Tutor - Requirements
+# ==========================================================
+
+# Web Application
+streamlit
+
+# AI Integration
+openai
+
+# Environment Variables
+python-dotenv
+
+# GitHub Repository Import
+gitpython
+
+# Graph Visualization
+pyvis
+
+# Optional Utilities
+requests

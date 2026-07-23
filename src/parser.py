@@ -1,176 +1,226 @@
+"""
+parser.py
+
+Parses Python source code using Python's built-in AST module.
+
+Responsibilities:
+- Parse imports
+- Parse constants
+- Parse classes
+- Parse methods
+- Parse standalone functions
+- Detect the program entry point
+
+Author: Sourabh Kharche
+Project: AI Code Tutor
+"""
+
 import ast
 from pathlib import Path
 
-from models import PythonFile, ClassInfo, FunctionInfo
+from models import (
+    PythonFile,
+    ClassInfo,
+    FunctionInfo,
+)
 
+
+# ==========================================================
+# Python Parser
+# ==========================================================
 
 class PythonParser:
+    """
+    Converts Python source code into structured objects.
+    """
 
     def parse(self, filepath):
+        """
+        Parses one Python source file.
+
+        Parameters:
+            filepath (Path): Path to the Python file.
+
+        Returns:
+            PythonFile
+        """
+
+        # Convert to a Path object.
         path = Path(filepath)
 
+        # Read the source code.
         source = path.read_text(encoding="utf-8")
+
+        # Build the Abstract Syntax Tree.
         tree = ast.parse(source)
 
+        # Create the PythonFile model.
         python_file = PythonFile(
-            name = filepath.name,
-            path = filepath
+            name=path.name,
+            path=path
         )
 
+        # Save the AST for future analysis.
         python_file.tree = tree
 
+        # Parse each section of the file.
+        self.parse_imports(tree, python_file)
+        self.parse_constants(tree, python_file)
+        self.parse_classes(tree, source, python_file)
+        self.parse_functions(tree, source, python_file)
+        self.detect_entry_point(tree, python_file)
+
+        return python_file
+
+    # ======================================================
+    # Imports
+    # ======================================================
+
+    def parse_imports(self, tree, python_file):
+        """
+        Extract all imports from the file.
+        """
+
         for node in tree.body:
-            # -------------------------
-            # Entry Point
-            # -------------------------
-            if isinstance(node, ast.If):
 
-                test = node.test
-
-                if (
-                    isinstance(test, ast.Compare)
-                    and isinstance(test.left, ast.Name)
-                    and test.left.id == "__name__"
-                    and len(test.ops) == 1
-                    and isinstance(test.ops[0], ast.Eq)
-                    and len(test.comparators) == 1
-                    and isinstance(test.comparators[0], ast.Constant)
-                    and test.comparators[0].value == "__main__"
-                ):
-                    python_file.has_entry_point = True
-
-            # -------------------------
-            # import math
-            # -------------------------
             if isinstance(node, ast.Import):
 
                 for alias in node.names:
                     python_file.imports.append(alias.name)
 
-            # -------------------------
-            # from math import sqrt
-            # -------------------------
             elif isinstance(node, ast.ImportFrom):
 
                 module = node.module or ""
 
                 for alias in node.names:
-                    python_file.imports.append(f"{module}.{alias.name}")
+                    python_file.imports.append(
+                        f"{module}.{alias.name}"
+                    )
 
-            # -------------------------
-            # Constants
-            # Example:
-            # GRAVITY = 9.81
-            # -------------------------
-            elif isinstance(node, ast.Assign):
+    # ======================================================
+    # Constants
+    # ======================================================
 
-                for target in node.targets:
+    def parse_constants(self, tree, python_file):
+        """
+        Find global constants.
 
-                    if isinstance(target, ast.Name):
+        A constant is assumed to be a variable with
+        an uppercase name.
+        """
 
-                        if target.id.isupper():
-                            python_file.constants.append(target.id)
+        for node in tree.body:
 
-            # -------------------------
-            # Classes
-            # -------------------------
-            elif isinstance(node, ast.ClassDef):
+            if not isinstance(node, ast.Assign):
+                continue
 
-                parent_classes = []
+            for target in node.targets:
 
-                for base in node.bases:
+                if isinstance(target, ast.Name):
 
-                    if isinstance(base, ast.Name):
-                        parent_classes.append(base.id)
+                    if target.id.isupper():
 
-                    elif isinstance(base, ast.Attribute):
-                        parent_classes.append(base.attr)
-
-                class_info = ClassInfo(
-                    name=node.name,
-                    parent_classes=parent_classes,
-                    docstring=ast.get_docstring(node) or ""
-                )
-
-                for item in node.body:
-
-                    if isinstance(item, ast.FunctionDef):
-
-                        parameters = [
-                            arg.arg
-                            for arg in item.args.args
-                        ]
-
-                        decorators = []
-
-                        for decorator in item.decorator_list:
-
-                            if isinstance(decorator, ast.Name):
-                                decorators.append(decorator.id)
-
-                            elif isinstance(decorator, ast.Attribute):
-                                decorators.append(decorator.attr)
-
-                        return_type = ""
-
-                        if item.returns:
-
-                            if isinstance(item.returns, ast.Name):
-                                return_type = item.returns.id
-
-                            elif isinstance(item.returns, ast.Constant):
-                                return_type = str(item.returns.value)
-
-                        method = FunctionInfo(
-                            name=item.name,
-                            parameters=parameters,
-                            decorators=decorators,
-                            return_type=return_type,
-                            docstring=ast.get_docstring(item) or ""
+                        python_file.constants.append(
+                            target.id
                         )
 
-                        class_info.methods.append(method)
+    # ======================================================
+    # Classes
+    # ======================================================
 
-                python_file.classes.append(class_info)
+    def parse_classes(self, tree, source, python_file):
+        """
+        Parse every class in the file.
+        """
 
-            # -------------------------
-            # Standalone functions
-            # -------------------------
-            elif isinstance(node, ast.FunctionDef):
+        for node in tree.body:
 
-                parameters = [
-                    arg.arg
-                    for arg in node.args.args
-                ]
+            if not isinstance(node, ast.ClassDef):
+                continue
 
-                decorators = []
+            class_info = ClassInfo(
+                name=node.name,
+                docstring=ast.get_docstring(node) or "",
+                source_code=ast.get_source_segment(source, node) or ""
+            )
 
-                for decorator in node.decorator_list:
+            # Parse methods.
+            for item in node.body:
 
-                    if isinstance(decorator, ast.Name):
-                        decorators.append(decorator.id)
+                if not isinstance(item, ast.FunctionDef):
+                    continue
 
-                    elif isinstance(decorator, ast.Attribute):
-                        decorators.append(decorator.attr)
+                arguments = []
 
-                return_type = ""
+                for argument in item.args.args:
+                    arguments.append(argument.arg)
 
-                if node.returns:
-
-                    if isinstance(node.returns, ast.Name):
-                        return_type = node.returns.id
-
-                    elif isinstance(node.returns, ast.Constant):
-                        return_type = str(node.returns.value)
-
-                function = FunctionInfo(
-                    name=node.name,
-                    parameters=parameters,
-                    decorators=decorators,
-                    return_type=return_type,
-                    docstring=ast.get_docstring(node) or ""
+                method = FunctionInfo(
+                    name=item.name,
+                    arguments=arguments,
+                    docstring=ast.get_docstring(item) or "",
+                    source_code=ast.get_source_segment(source, item) or ""
                 )
 
-                python_file.functions.append(function)
+                class_info.methods.append(method)
 
-        return python_file
+            python_file.classes.append(class_info)
+
+    # ======================================================
+    # Standalone Functions
+    # ======================================================
+
+    def parse_functions(self, tree, source, python_file):
+        """
+        Parse standalone functions.
+
+        Methods inside classes are ignored because
+        they are handled in parse_classes().
+        """
+
+        for node in tree.body:
+
+            if not isinstance(node, ast.FunctionDef):
+                continue
+
+            arguments = []
+
+            for argument in node.args.args:
+                arguments.append(argument.arg)
+
+            function = FunctionInfo(
+                name=node.name,
+                arguments=arguments,
+                docstring=ast.get_docstring(node) or "",
+                source_code=ast.get_source_segment(source, node) or ""
+            )
+
+            python_file.functions.append(function)
+
+    # ======================================================
+    # Entry Point
+    # ======================================================
+
+    def detect_entry_point(self, tree, python_file):
+        """
+        Detect:
+
+        if __name__ == "__main__":
+        """
+
+        for node in tree.body:
+
+            if not isinstance(node, ast.If):
+                continue
+
+            test = node.test
+
+            if (
+                isinstance(test, ast.Compare)
+                and isinstance(test.left, ast.Name)
+                and test.left.id == "__name__"
+                and len(test.comparators) == 1
+                and isinstance(test.comparators[0], ast.Constant)
+                and test.comparators[0].value == "__main__"
+            ):
+                python_file.has_entry_point = True

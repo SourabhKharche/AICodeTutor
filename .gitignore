@@ -1,0 +1,52 @@
+#-------------------------------------------------------------
+# Python Environment
+
+# Virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+#-------------------------------------------------------------
+#-------------------------------------------------------------
+# Environment Variables
+
+# API keys and secrets
+.env
+
+# Streamlit
+.streamlit/
+
+# IDE Files
+.vscode/
+.idea/
+#-------------------------------------------------------------
+#-------------------------------------------------------------
+# Operating System Files
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store
+
+# Generated Files
+*.html
+*.log
+#-------------------------------------------------------------
+#-------------------------------------------------------------
+# Python cache
+__pycache__/
+*.pyc
+
+# Generated visualization assets
+lib/
+
+# Test environments
+**/venv/
+
+# Test generated files
+testcode/
+#-------------------------------------------------------------

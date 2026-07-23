@@ -1,149 +1,157 @@
+"""
+call_graph.py
+
+Builds a function call graph for a parsed Python project.
+
+The call graph shows which functions and methods call
+other functions or methods.
+
+Author: Sourabh Kharche
+Project: AI Code Tutor
+"""
+
 import ast
 
 
+# ==========================================================
+# Call Graph Builder
+# ==========================================================
+
 class CallGraph:
+    """
+    Builds a call graph by walking the AST of every
+    function and method in the project.
+    """
 
     def __init__(self):
+        """
+        Create an empty call graph.
+        """
 
         self.graph = {}
 
-
-    def add_call(self, caller, called):
-
-        if caller not in self.graph:
-
-            self.graph[caller] = []
-
-
-        if called not in self.graph[caller]:
-
-            self.graph[caller].append(called)
-
-
-    def analyze_function(
-        self,
-        node,
-        function_name,
-        class_name=None
-    ):
-
-        if class_name:
-
-            caller_name = f"{class_name}.{function_name}"
-
-        else:
-
-            caller_name = function_name
-
-
-        for child in ast.walk(node):
-
-            if isinstance(child, ast.Call):
-
-                called_name = None
-
-
-                # Normal function call
-                if isinstance(child.func, ast.Name):
-
-                    called_name = child.func.id
-
-
-                # Method call
-                elif isinstance(child.func, ast.Attribute):
-
-                    called_name = child.func.attr
-
-
-                if called_name:
-
-                    if class_name:
-
-                        # Assume internal class calls
-                        self.add_call(
-                            caller_name,
-                            f"{class_name}.{called_name}"
-                        )
-
-                    else:
-
-                        self.add_call(
-                            caller_name,
-                            called_name
-                        )
-
+    # ======================================================
+    # Build Call Graph
+    # ======================================================
 
     def build(self, project):
+        """
+        Analyze every parsed file and build the call graph.
 
+        Parameters:
+            project (Project): Parsed project.
+        """
+
+        # Remove any previous results.
+        self.graph.clear()
+
+        # Visit every parsed Python file.
         for python_file in project.files:
 
-            tree = python_file.tree
+            # Skip files that were not parsed correctly.
+            if python_file.tree is None:
+                continue
 
+            # Walk through every node in the AST.
+            for node in ast.walk(python_file.tree):
 
-            for node in ast.walk(tree):
+                # We only care about functions.
+                if not isinstance(node, ast.FunctionDef):
+                    continue
 
+                # Find every function call inside this function.
+                calls = self.find_function_calls(node)
 
-                # Standalone functions
+                # Store the result.
+                self.graph[node.name] = calls
 
-                if isinstance(node, ast.FunctionDef):
+    # ======================================================
+    # Find Function Calls
+    # ======================================================
 
-                    self.analyze_function(
-                        node,
-                        node.name
-                    )
+    def find_function_calls(self, function_node):
+        """
+        Return every function called inside a function.
 
+        Parameters:
+            function_node (ast.FunctionDef)
 
-                # Classes
+        Returns:
+            list[str]
+        """
 
-                if isinstance(node, ast.ClassDef):
+        calls = []
 
-                    for child in node.body:
+        # Search every node inside the function.
+        for node in ast.walk(function_node):
 
-                        if isinstance(
-                            child,
-                            ast.FunctionDef
-                        ):
+            if not isinstance(node, ast.Call):
+                continue
 
-                            self.analyze_function(
-                                child,
-                                child.name,
-                                node.name
-                            )
+            # Example:
+            # print()
+            if isinstance(node.func, ast.Name):
 
+                calls.append(node.func.id)
 
-        return self.graph
+            # Example:
+            # self.update_position()
+            elif isinstance(node.func, ast.Attribute):
 
+                calls.append(node.func.attr)
+
+        # Remove duplicate calls while preserving order.
+        unique_calls = []
+
+        for call in calls:
+
+            if call not in unique_calls:
+                unique_calls.append(call)
+
+        return unique_calls
+
+    # ======================================================
+    # Lookup
+    # ======================================================
 
     def get_calls(self, function_name):
+        """
+        Return every function called by the given function.
+        """
 
-        return self.graph.get(
-            function_name,
-            []
-        )
+        return self.graph.get(function_name, [])
 
+    # ======================================================
+    # Display
+    # ======================================================
 
     def display(self):
+        """
+        Print the call graph.
+        """
 
         print("\n" + "=" * 60)
         print("CALL GRAPH")
         print("=" * 60)
 
+        if not self.graph:
 
-        for caller, calls in self.graph.items():
+            print("\nNo function calls found.")
+            return
 
-            print(f"\n{caller}")
+        # Print functions alphabetically.
+        function_names = list(self.graph.keys())
+        function_names.sort()
 
+        for function_name in function_names:
 
-            if calls:
+            print(f"\n{function_name}")
 
-                for call in calls:
+            calls = self.graph[function_name]
 
-                    print(
-                        f"  └── {call}"
-                    )
+            if not calls:
+                print("    └── No function calls")
+                continue
 
-            else:
-
-                print(
-                    "  └── No calls"
-                )
+            for call in calls:
+                print(f"    └── {call}")
