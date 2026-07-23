@@ -17,16 +17,13 @@ Project: AI Code Tutor
 from symbol_table import SymbolTable
 from call_graph import CallGraph
 
-
 # ==========================================================
 # Project Analyzer
 # ==========================================================
-
 class ProjectAnalyzer:
     """
     Performs high-level analysis on a parsed project.
     """
-
     def __init__(self):
         """
         Create the analyzer and its helper objects.
@@ -38,18 +35,14 @@ class ProjectAnalyzer:
     # ======================================================
     # Analyze Project
     # ======================================================
-
     def analyze(self, project):
         """
         Analyze the entire project.
-
         Parameters:
             project (Project)
-
         Returns:
             dict
         """
-
         # Build lookup tables.
         self.symbol_table.build(project)
         self.call_graph.build(project)
@@ -68,12 +61,10 @@ class ProjectAnalyzer:
     # ======================================================
     # Project Statistics
     # ======================================================
-
     def calculate_statistics(self, project):
         """
         Count important project information.
         """
-
         statistics = {
             "python_files": 0,
             "imports": 0,
@@ -88,15 +79,10 @@ class ProjectAnalyzer:
         largest_size = -1
 
         for python_file in project.files:
-
             statistics["python_files"] += 1
-
             statistics["imports"] += len(python_file.imports)
-
             statistics["constants"] += len(python_file.constants)
-
             statistics["classes"] += len(python_file.classes)
-
             statistics["functions"] += len(python_file.functions)
 
             method_count = 0
@@ -123,16 +109,13 @@ class ProjectAnalyzer:
     # ======================================================
     # Entry Point
     # ======================================================
-
     def find_entry_point(self, project):
         """
         Find the file containing:
 
             if __name__ == "__main__":
         """
-
         for python_file in project.files:
-
             if python_file.has_entry_point:
                 return python_file.name
 
@@ -141,18 +124,14 @@ class ProjectAnalyzer:
     # ======================================================
     # Learning Order
     # ======================================================
-
     def build_learning_order(self, project):
         """
         Suggest a simple order for reading the project.
-
         Files with fewer classes and functions appear first.
         """
-
         learning_order = []
 
         for python_file in project.files:
-
             complexity = (
                 len(python_file.classes)
                 + len(python_file.functions)
@@ -163,7 +142,6 @@ class ProjectAnalyzer:
             )
 
         learning_order.sort()
-
         ordered_files = []
 
         for _, file_name in learning_order:

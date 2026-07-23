@@ -1,7 +1,7 @@
 """
 ui.py
-Creates the Streamlit web interface for AI Code Tutor.
 
+Creates the Streamlit web interface for AI Code Tutor.
 Responsibilities:
 - Display project analysis
 - Show files and code structure
@@ -40,11 +40,9 @@ st.set_page_config(
 def analyze_project(project_path):
     """
     Runs the complete analysis pipeline.
-
     Returns:
         Project and analysis results.
     """
-
     # ----------------------------------------------
     # Scan project files
     # ----------------------------------------------
