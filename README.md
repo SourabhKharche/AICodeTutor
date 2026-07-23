@@ -113,7 +113,7 @@ The learning path is created from the actual project structure.
 
 # AI Tutor
 
-With OpenAI integration enabled, students can ask questions about the code.
+With Google Gemini integration enabled, students can ask questions about the code.
 
 Examples:
 
@@ -215,7 +215,7 @@ components/
 
 ## Artificial Intelligence
 
-- OpenAI API
+- Google Gemini API
 
 ## Version Control
 
@@ -267,7 +267,7 @@ pip install -r requirements.txt
 
 # AI Configuration
 
-AI features require an OpenAI API key.
+AI features require an Google Gemini API key.
 
 Create a file named:
 
@@ -280,7 +280,7 @@ in the project root.
 Add:
 
 ```env
-OPENAI_API_KEY=your_api_key_here
+GEMINI_API_KEY = api_key_here
 ```
 
 If no API key is provided:

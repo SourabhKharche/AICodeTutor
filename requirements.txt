@@ -6,7 +6,7 @@
 streamlit
 
 # AI Integration
-openai
+google-genai
 
 # Environment Variables
 python-dotenv

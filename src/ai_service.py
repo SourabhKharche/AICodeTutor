@@ -4,7 +4,7 @@ ai_service.py
 Handles communication with AI models.
 
 Responsibilities:
-- Connect to OpenAI API
+- Connect to Gemini API
 - Send prompts
 - Return AI responses
 - Handle missing configuration safely
@@ -15,7 +15,7 @@ Project: AI Code Tutor
 
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+from google import genai
 
 load_dotenv()
 
@@ -37,14 +37,14 @@ class AIService:
         self.enabled = False
 
         api_key = os.getenv(
-            "OPENAI_API_KEY"
+            "GEMINI_API_KEY"
         )
 
         # ----------------------------------------------
         # Create client only if key exists
         # ----------------------------------------------
         if api_key:
-            self.client = OpenAI(
+            self.client = genai.Client(
                 api_key=api_key
             )
 
@@ -66,7 +66,7 @@ class AIService:
         if not self.enabled:
             return (
                 "AI features are currently unavailable.\n\n"
-                "Add OPENAI_API_KEY to your .env file "
+                "Add GEMINI_API_KEY to your .env file "
                 "to enable AI explanations."
             )
 
@@ -75,22 +75,14 @@ class AIService:
         # ----------------------------------------------
         try:
             response = (
-                self.client.chat.completions.create(
-                    model="gpt-4.1-mini",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ]
+                self.client.models.generate_content(
+                    model="gemini-flash-latest",
+                    contents=prompt
                 )
             )
 
             return (
-                response
-                .choices[0]
-                .message
-                .content
+                response.text
             )
 
         except Exception as error:

@@ -130,4 +130,4 @@ def render_code_explorer(project, results):
                 "Source code unavailable."
             )
 
-    return selected_symbol
+    return symbol

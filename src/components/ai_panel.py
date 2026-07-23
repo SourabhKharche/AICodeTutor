@@ -35,7 +35,7 @@ def render_ai_panel(
 
     """
     st.header(
-        "🤖 AI Code Tutor"
+        "AI Code Tutor"
     )
 
     # ======================================================
@@ -47,7 +47,7 @@ def render_ai_panel(
     if not ai_service.enabled:
         st.warning(
             "AI features disabled. "
-            "Add OPENAI_API_KEY to enable explanations."
+            "Add GEMINI_API_KEY to enable explanations."
         )
 
     # ======================================================
@@ -73,14 +73,29 @@ def render_ai_panel(
                 context = (
                     context_builder
                     .build_symbol_context(
-                        project,
                         selected_symbol
                     )
                 )
 
+                prompt = f"""
+                You are an expert programming tutor.
+
+                Explain this code to a beginner.
+
+                Please:
+                - Describe what the code does.
+                - Explain it step by step.
+                - Define any programming concepts.
+                - Mention any good programming practices used.
+                - Suggest improvements if appropriate.
+                - Format the response using Markdown headings and bullet points.
+
+                {context}
+                """
+
                 explanation = (
                     ai_service.ask(
-                        context
+                        prompt
                     )
                 )
 
